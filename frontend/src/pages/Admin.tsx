@@ -663,6 +663,7 @@ export default function Admin() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-16"
                       onClick={() => setEditingCategory(category)}
                     >
                       Edit
@@ -670,6 +671,7 @@ export default function Admin() {
                     <Button
                       variant="destructive"
                       size="sm"
+                      className="w-16"
                       onClick={() => handleDeleteCategory(category.id)}
                     >
                       Delete
@@ -712,6 +714,7 @@ export default function Admin() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-16"
                       onClick={() => startEditProduct(product)}
                     >
                       Edit
@@ -719,6 +722,7 @@ export default function Admin() {
                     <Button
                       variant="destructive"
                       size="sm"
+                      className="w-16"
                       onClick={() => handleDeleteProduct(product.id)}
                     >
                       Delete

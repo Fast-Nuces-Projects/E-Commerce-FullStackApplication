@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ProductCard } from '@/components/ProductCard';
 import { api, Product, Category } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,12 @@ export default function Products() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const categoryParam = searchParams.get('category');
+  const parsedCategory = categoryParam !== null ? Number(categoryParam) : null;
+  const selectedCategory =
+    parsedCategory !== null && !Number.isNaN(parsedCategory) ? parsedCategory : null;
 
   useEffect(() => {
     loadData();
@@ -77,7 +83,7 @@ export default function Products() {
                 <Button
                   variant={selectedCategory === null ? 'default' : 'ghost'}
                   className="w-full justify-start"
-                  onClick={() => setSelectedCategory(null)}
+                  onClick={() => setSearchParams({})}
                 >
                   All Categories
                 </Button>
@@ -88,7 +94,7 @@ export default function Products() {
                       selectedCategory === category.id ? 'default' : 'ghost'
                     }
                     className="w-full justify-start"
-                    onClick={() => setSelectedCategory(category.id)}
+                    onClick={() => setSearchParams({ category: String(category.id) })}
                   >
                     {category.name}
                   </Button>
