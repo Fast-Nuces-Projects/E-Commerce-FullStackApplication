@@ -118,8 +118,14 @@ class CartItemResponse(BaseModel):
 
 
 
+class OrderCreate(BaseModel):
+    payment_method: PaymentMethodEnum
+
+
 class OrderResponse(BaseModel):
     order_id: int
     amount: Decimal
     status: OrderStatusEnum
+    payment_method: Optional[str] = None
+    payment_status: Optional[str] = None
 
