@@ -7,6 +7,15 @@ from ..auth import get_current_user, require_admin
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
 
+@router.get("/methods")
+async def list_payment_methods(current_user: models.User = Depends(get_current_user)):
+	# Declared before "/{order_id}" so "methods" is not parsed as an order id.
+	return [
+		{"value": m.value, "label": models.PAYMENT_METHOD_LABELS[m]}
+		for m in models.ENABLED_PAYMENT_METHODS
+	]
+
+
 @router.post("/{order_id}")
 async def pay_order(order_id: int, db: db_dependency, current_user: models.User = Depends(get_current_user)):
 	order = db.query(models.Order).filter(models.Order.id == order_id).first()
@@ -19,19 +28,18 @@ async def pay_order(order_id: int, db: db_dependency, current_user: models.User 
 	if order.payment and order.payment.status.name == "COMPLETED":
 		return {"message": "Payment already completed", "transaction_id": order.payment.transaction_id}
 
-	# Mock payment processing: mark as completed
 	payment = order.payment
 	if not payment:
-		payment = models.Payment(
-			order_id=order.id,
-			amount=order.amount,
-			method=order.payment.method if order.payment else models.PaymentMethod.CARD,
-			status=models.PaymentStatus.COMPLETED,
-			transaction_id=f"TXN-{order.id}-{int(datetime.utcnow().timestamp())}",
+		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+	if payment.method == models.PaymentMethod.CASH:
+		raise HTTPException(
+			status_code=status.HTTP_400_BAD_REQUEST,
+			detail="Cash on delivery orders are paid on delivery",
 		)
-		db.add(payment)
-	else:
-		payment.status = models.PaymentStatus.COMPLETED
+
+	# Mock payment processing: mark as completed
+	payment.status = models.PaymentStatus.COMPLETED
+	payment.transaction_id = payment.transaction_id or f"TXN-{order.id}-{int(datetime.utcnow().timestamp())}"
 	db.commit()
 	db.refresh(payment)
 

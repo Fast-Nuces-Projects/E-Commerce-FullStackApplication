@@ -11,6 +11,16 @@ class PaymentMethod(enum.Enum):
     CASH = "Cash"
     WALLET = "Wallet"
 
+# Payment methods customers can currently choose at checkout.
+# To open up card payments later, add PaymentMethod.CARD here.
+ENABLED_PAYMENT_METHODS = [PaymentMethod.CASH]
+
+PAYMENT_METHOD_LABELS = {
+    PaymentMethod.CARD: "Credit / Debit Card",
+    PaymentMethod.CASH: "Cash on Delivery",
+    PaymentMethod.WALLET: "Wallet",
+}
+
 class PaymentStatus(enum.Enum):
 
     PENDING = "Pending"
