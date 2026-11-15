@@ -73,10 +73,31 @@ export default function Orders() {
     }
   };
 
+  const handleDeliver = async (orderId: number) => {
+    try {
+      await api.deliverOrder(orderId);
+      toast({
+        title: "Order delivered",
+        description: `Order #${orderId} marked as delivered and cash collected.`,
+      });
+      await loadOrders();
+    } catch (error) {
+      toast({
+        title: "Could not update order",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch ((status || "").toLowerCase()) {
       case "pending":
         return "bg-yellow-500";
+      case "shipped":
+        return "bg-blue-500";
+      case "delivered":
       case "completed":
         return "bg-green-500";
       case "cancelled":
@@ -174,6 +195,20 @@ export default function Orders() {
                   </p>
                 )}
               </div>
+              {order.payment_method && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                  <span>Payment: {order.payment_method_label ?? order.payment_method}</span>
+                  {order.payment_status && (
+                    <Badge
+                      className={`${getStatusColor(
+                        order.payment_status
+                      )} text-white capitalize`}
+                    >
+                      {order.payment_status}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -198,14 +233,30 @@ export default function Orders() {
                       ${Number(order.amount).toFixed(2)}
                     </span>
                   </div>
-                  {order.status?.toLowerCase() === "pending" && !isAdmin && (
-                    <Button
-                      className="mt-4"
-                      onClick={() => handlePay(order.id)}
-                    >
-                      Pay Now
-                    </Button>
-                  )}
+                  {order.status?.toLowerCase() === "pending" &&
+                    !isAdmin &&
+                    order.payment_method !== "Cash" && (
+                      <Button
+                        className="mt-4"
+                        onClick={() => handlePay(order.id)}
+                      >
+                        Pay Now
+                      </Button>
+                    )}
+                  {order.status?.toLowerCase() === "pending" &&
+                    order.payment_method === "Cash" &&
+                    (isAdmin ? (
+                      <Button
+                        className="mt-4"
+                        onClick={() => handleDeliver(order.id)}
+                      >
+                        Mark Delivered &amp; Cash Collected
+                      </Button>
+                    ) : (
+                      <p className="mt-4 text-sm text-muted-foreground">
+                        Pay in cash when your order arrives.
+                      </p>
+                    ))}
                 </div>
               </div>
             </CardContent>
