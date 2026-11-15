@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from fastapi import APIRouter, status, HTTPException
 from .. import schemas, models
 from ..database import db_dependency
@@ -14,7 +15,7 @@ router = APIRouter(
 async def user_register(user: schemas.UserRegister, db: db_dependency):
 
     # Check if user with email already exists
-    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+    existing_user = db.query(models.User).filter(func.lower(models.User.email) == user.email.lower()).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, 
@@ -22,7 +23,7 @@ async def user_register(user: schemas.UserRegister, db: db_dependency):
         )
     
     # Check if username already exists
-    existing_username = db.query(models.User).filter(models.User.username == user.username).first()
+    existing_username = db.query(models.User).filter(func.lower(models.User.username) == user.username.lower()).first()
     if existing_username:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -82,7 +83,7 @@ async def update_user(user_id: int, user_update: schemas.UserUpdate, db: db_depe
     
     # Check if email is being updated and if it's already taken
     if user_update.email and user_update.email != user.email:
-        existing_user = db.query(models.User).filter(models.User.email == user_update.email).first()
+        existing_user = db.query(models.User).filter(func.lower(models.User.email) == user_update.email.lower()).first()
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -92,7 +93,7 @@ async def update_user(user_id: int, user_update: schemas.UserUpdate, db: db_depe
     
     # Check if username is being updated and if it's already taken
     if user_update.username and user_update.username != user.username:
-        existing_username = db.query(models.User).filter(models.User.username == user_update.username).first()
+        existing_username = db.query(models.User).filter(func.lower(models.User.username) == user_update.username.lower()).first()
         if existing_username:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

@@ -9,7 +9,7 @@ Run locally
 pip install -r requirements.txt
 ```
 
-2) Configure database in `app/database.py` (URL_DATABASE) to your MySQL instance.
+2) Set the `DATABASE_URL` env var (see `.env.example`) to your PostgreSQL instance.
 
 3) Start the server:
 

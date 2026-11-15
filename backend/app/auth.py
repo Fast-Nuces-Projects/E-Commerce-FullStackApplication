@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import Depends, HTTPException, status
@@ -23,7 +24,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def authenticate_user(db, email: str, password: str) -> Optional[models.User]:
-	user = db.query(models.User).filter(models.User.email == email).first()
+	user = db.query(models.User).filter(func.lower(models.User.email) == email.lower()).first()
 	if not user:
 		return None
 	if not verify_password(password, user.password):

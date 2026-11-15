@@ -73,7 +73,7 @@ async def get_best_sellers(
         )
         .outerjoin(models.OrderItem, models.OrderItem.product_id == models.Product.id)
         .group_by(models.Product.id)
-        .order_by(func.sum(models.OrderItem.quantity).desc())
+        .order_by(func.sum(models.OrderItem.quantity).desc().nulls_last())
         .limit(limit)
         .all()
     )
