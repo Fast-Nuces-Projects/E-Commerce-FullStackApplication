@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from fastapi import APIRouter, Depends, HTTPException, status
 from ..database import db_dependency
 from .. import models, schemas
@@ -23,7 +24,7 @@ async def get_category(category_id: int, db: db_dependency):
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_admin)], response_model=schemas.CategoryResponse)
 async def create_category(category: schemas.CategoryCreate, db: db_dependency):
-	if db.query(models.Category).filter(models.Category.name == category.name).first():
+	if db.query(models.Category).filter(func.lower(models.Category.name) == category.name.lower()).first():
 		raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category name already exists")
 	c = models.Category(name=category.name, description=category.description)
 	db.add(c)
@@ -38,7 +39,7 @@ async def update_category(category_id: int, category: schemas.CategoryUpdate, db
 	if not c:
 		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 	if category.name:
-		exists = db.query(models.Category).filter(models.Category.name == category.name, models.Category.id != category_id).first()
+		exists = db.query(models.Category).filter(func.lower(models.Category.name) == category.name.lower(), models.Category.id != category_id).first()
 		if exists:
 			raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category name already exists")
 		c.name = category.name

@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 from app import models
+from app.database import URL_DATABASE
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -20,6 +21,10 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = models.Base.metadata
+
+# Use the same database URL as the app (DATABASE_URL env var) instead of alembic.ini.
+# '%' must be escaped because ConfigParser treats it as interpolation.
+config.set_main_option("sqlalchemy.url", URL_DATABASE.replace("%", "%%"))
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -66,7 +71,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
         )
 
         with context.begin_transaction():

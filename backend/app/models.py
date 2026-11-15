@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, DECIMAL, ForeignKey, Enum, TIMESTAMP
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, DECIMAL, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from .database import Base
 from datetime import datetime
@@ -47,7 +47,7 @@ class AlertStatus(enum.Enum):
 
 class User(Base):
 
-    __tablename__ = "Users"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(20), nullable=False, unique=True)
@@ -68,7 +68,7 @@ class User(Base):
 
 class Category(Base):
 
-    __tablename__ = "Categories"
+    __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False, unique=True)
@@ -80,7 +80,7 @@ class Category(Base):
 
 class Product(Base):
 
-    __tablename__ = "Products"
+    __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)
@@ -103,7 +103,7 @@ class Product(Base):
 
 class Order(Base):
 
-    __tablename__ = "Orders"
+    __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
@@ -121,7 +121,7 @@ class Order(Base):
 
 class OrderItem(Base):
 
-    __tablename__ = "OrderItems"
+    __tablename__ = "order_items"
 
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey(Order.id), nullable=False)
@@ -136,7 +136,7 @@ class OrderItem(Base):
 
 class Cart(Base):
 
-    __tablename__ = "Carts"
+    __tablename__ = "carts"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
@@ -152,7 +152,7 @@ class Cart(Base):
 
 class CartItem(Base):
 
-    __tablename__ ="CartItems"
+    __tablename__ = "cart_items"
 
     id = Column(Integer, primary_key=True, index=True)
     cart_id = Column(Integer, ForeignKey(Cart.id), nullable=False)
@@ -167,11 +167,11 @@ class CartItem(Base):
 
 class Payment(Base):
 
-    __tablename__ = "Payments"
+    __tablename__ = "payments"
 
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey(Order.id), nullable=False)
-    amount = Column(DECIMAL, nullable=False)
+    amount = Column(DECIMAL(10, 2), nullable=False)
     method = Column(Enum(PaymentMethod), nullable=False)
     status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
     transaction_id = Column(String(100), unique=True)
@@ -182,7 +182,7 @@ class Payment(Base):
 
 class Invoice(Base):
 
-    __tablename__ = "Invoices"
+    __tablename__ = "invoices"
 
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey(Order.id), nullable=False)
@@ -195,7 +195,7 @@ class Invoice(Base):
 
 class StockTransaction(Base):
 
-    __tablename__ = "StockTransactions"
+    __tablename__ = "stock_transactions"
 
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey(Product.id), nullable=False)
@@ -209,7 +209,7 @@ class StockTransaction(Base):
 
 class StockAlert(Base):
 
-    __tablename__ = "StockAlerts"
+    __tablename__ = "stock_alerts"
 
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey(Product.id), nullable=False)

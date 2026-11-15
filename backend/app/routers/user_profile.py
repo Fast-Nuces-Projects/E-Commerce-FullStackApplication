@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from fastapi import APIRouter, Depends, HTTPException, status
 from .. import models, schemas
 from ..database import db_dependency
@@ -21,7 +22,7 @@ async def update_my_profile(update: schemas.UserUpdate, db: db_dependency = None
 		current_user.username = update.username
 	if update.email:
 		# Ensure uniqueness
-		exists = db.query(models.User).filter(models.User.email == update.email, models.User.id != current_user.id).first()
+		exists = db.query(models.User).filter(func.lower(models.User.email) == update.email.lower(), models.User.id != current_user.id).first()
 		if exists:
 			raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
 		current_user.email = update.email

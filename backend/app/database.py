@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
@@ -7,7 +9,10 @@ from fastapi import Depends
 
 
 
-URL_DATABASE = "mysql+pymysql://root:mysql@localhost:3306/ecommerce"
+URL_DATABASE = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg2://postgres:postgres@localhost:5432/ecommerce",
+)
 
 engine = create_engine(URL_DATABASE)
 
