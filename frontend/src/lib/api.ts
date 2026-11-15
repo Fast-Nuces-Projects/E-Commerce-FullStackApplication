@@ -98,12 +98,22 @@ export interface Order {
   user_id?: number;
   created_at?: string;
   items?: OrderItem[];
+  payment_method?: PaymentMethod;
+  payment_method_label?: string;
+  payment_status?: string;
+}
+
+export interface PaymentMethodOption {
+  value: PaymentMethod;
+  label: string;
 }
 
 export interface OrderCreationResponse {
   order_id: number;
   amount: number;
   status: string;
+  payment_method?: PaymentMethod;
+  payment_status?: string;
 }
 
 export interface PaymentResponse {
@@ -159,6 +169,9 @@ class ApiClient {
       status: order.status,
       user_id: order.user_id,
       created_at: order.created_at,
+      payment_method: order.payment_method ?? undefined,
+      payment_method_label: order.payment_method_label ?? order.payment_method ?? undefined,
+      payment_status: order.payment_status ?? undefined,
       items: Array.isArray(order.items)
         ? order.items.map((item: any, index: number) => ({
             id: item.id ?? index,
@@ -329,16 +342,23 @@ class ApiClient {
     return data.map((order) => this.normalizeOrder(order));
   }
 
-  async createOrder(paymentMethod: string = 'Card'): Promise<OrderCreationResponse> {
-    const response = await this.request<OrderCreationResponse>(
-      `/orders?payment_method=${encodeURIComponent(paymentMethod)}`,
-      { method: 'POST' }
-    );
+  async createOrder(paymentMethod: PaymentMethod): Promise<OrderCreationResponse> {
+    const response = await this.request<OrderCreationResponse>('/orders', {
+      method: 'POST',
+      body: JSON.stringify({ payment_method: paymentMethod }),
+    });
     return {
       order_id: response.order_id,
       amount: Number(response.amount ?? 0),
       status: response.status,
+      payment_method: response.payment_method,
+      payment_status: response.payment_status,
     };
+  }
+
+  // Admin: mark a cash-on-delivery order as delivered and its payment as collected
+  async deliverOrder(orderId: number): Promise<{ order_id: number; status: string; payment_status: string }> {
+    return this.request(`/orders/${orderId}/deliver`, { method: 'POST' });
   }
 
   async getOrder(id: number): Promise<Order> {
@@ -347,6 +367,10 @@ class ApiClient {
   }
 
   // Payment endpoints
+  async getPaymentMethods(): Promise<PaymentMethodOption[]> {
+    return this.request<PaymentMethodOption[]>('/payments/methods');
+  }
+
   async payOrder(orderId: number): Promise<PaymentResponse> {
     return this.request<PaymentResponse>(`/payments/${orderId}`, {
       method: 'POST',

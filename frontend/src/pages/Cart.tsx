@@ -4,12 +4,12 @@ import { Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/contexts/CartContext";
-import { api } from "@/lib/api";
+import { api, PaymentMethod } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-
-const PAYMENT_METHODS = ["Card", "Cash", "Wallet"] as const;
 
 export default function Cart() {
   const { cart, updateQuantity, removeItem, totalPrice, loading, refreshCart } =
@@ -18,9 +18,20 @@ export default function Cart() {
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role === "Admin";
-  const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>("Card");
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
+  const [placingOrder, setPlacingOrder] = useState(false);
+
+  // Enabled payment methods come from the backend, so enabling card later needs no UI list change.
+  const { data: paymentMethods = [], isLoading: methodsLoading } = useQuery({
+    queryKey: ["payment-methods"],
+    queryFn: () => api.getPaymentMethods(),
+    enabled: !isAdmin,
+  });
+  const paymentMethod = selectedMethod ?? paymentMethods[0]?.value ?? null;
 
   const handleCheckout = async () => {
+    if (!paymentMethod || placingOrder) return;
+    setPlacingOrder(true);
     try {
       const orderResponse = await api.createOrder(paymentMethod);
       await refreshCart();
@@ -36,6 +47,8 @@ export default function Cart() {
           error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
+    } finally {
+      setPlacingOrder(false);
     }
   };
 
@@ -203,26 +216,50 @@ export default function Cart() {
               </div>
             </div>
 
-            <div className="space-y-2 mb-4">
-              <Label htmlFor="payment-method">Payment Method</Label>
-              <select
-                id="payment-method"
-                value={paymentMethod}
-                onChange={(e) =>
-                  setPaymentMethod(e.target.value as (typeof PAYMENT_METHODS)[number])
-                }
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                {PAYMENT_METHODS.map((method) => (
-                  <option key={method} value={method}>
-                    {method}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-3 mb-4">
+              <Label>Payment Method</Label>
+              {methodsLoading ? (
+                <div className="h-12 bg-muted rounded-md animate-pulse" />
+              ) : paymentMethods.length === 0 ? (
+                <p className="text-sm text-destructive">
+                  No payment methods are available right now.
+                </p>
+              ) : (
+                <RadioGroup
+                  value={paymentMethod ?? ""}
+                  onValueChange={(value) => setSelectedMethod(value as PaymentMethod)}
+                  className="space-y-2"
+                >
+                  {paymentMethods.map((method) => (
+                    <Label
+                      key={method.value}
+                      htmlFor={`payment-${method.value}`}
+                      className="flex items-center gap-3 rounded-md border p-3 cursor-pointer font-medium has-[:checked]:border-primary"
+                    >
+                      <RadioGroupItem value={method.value} id={`payment-${method.value}`} />
+                      <span>{method.label}</span>
+                    </Label>
+                  ))}
+                </RadioGroup>
+              )}
+              {paymentMethod === "Cash" && (
+                <p className="text-sm text-muted-foreground">
+                  Pay in cash when your order arrives.
+                </p>
+              )}
             </div>
 
-            <Button className="w-full" size="lg" onClick={handleCheckout}>
-              Proceed to Checkout
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleCheckout}
+              disabled={!paymentMethod || placingOrder}
+            >
+              {placingOrder
+                ? "Placing order..."
+                : paymentMethod === "Cash"
+                ? "Place Order"
+                : "Proceed to Checkout"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
 
